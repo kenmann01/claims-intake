@@ -124,7 +124,8 @@ async def create_notification(
     try:
         notification = NotificationRequest.model_validate(payload)
     except ValidationError as exc:
-        field = str(exc.errors()[0]["loc"][-1])
+        loc = exc.errors()[0].get("loc") or ("body",)
+        field = str(loc[-1])
         return _error_response("MALFORMED_REQUEST", 400, {"field": field})
 
     try:
