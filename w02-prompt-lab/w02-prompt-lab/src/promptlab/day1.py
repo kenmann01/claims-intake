@@ -46,25 +46,45 @@ def call_ollama(
     prompt: str,
     temperature: float,
     num_predict: int,
-) -> tuple[dict[str, Any], int]:
+) -> tuple[dict[str, Any], int, str | None]:
     started = time.perf_counter()
-    response = httpx.post(
-        f"{settings.ollama_base_url}/api/generate",
-        json={
-            "model": model_id,
-            "prompt": prompt,
-            "stream": False,
-            "options": {
-                "temperature": temperature,
-                "num_predict": num_predict,
+    try:
+        response = httpx.post(
+            f"{settings.ollama_base_url}/api/generate",
+            json={
+                "model": model_id,
+                "prompt": prompt,
+                "stream": False,
+                "options": {
+                    "temperature": temperature,
+                    "num_predict": num_predict,
+                },
             },
-        },
-        timeout=180.0,
-    )
+            timeout=180.0,
+        )
+    except httpx.HTTPError as exc:
+        latency_ms = int((time.perf_counter() - started) * 1000)
+        return {}, latency_ms, type(exc).__name__
+
     latency_ms = int((time.perf_counter() - started) * 1000)
-    response.raise_for_status()
-    payload: dict[str, Any] = response.json()
-    return payload, latency_ms
+    try:
+        response.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        return {}, latency_ms, type(exc).__name__
+
+    try:
+        payload: dict[str, Any] = response.json()
+    except ValueError:
+        return {}, latency_ms, "JSONDecodeError"
+    return payload, latency_ms, None
+
+
+def error_type_for(payload: dict[str, Any], transport_error: str | None) -> str | None:
+    if transport_error is not None:
+        return transport_error
+    if payload.get("done_reason") == "length":
+        return "TruncatedResponseError"
+    return None
 
 
 def build_record(
@@ -106,6 +126,37 @@ def build_record(
     )
 
 
+def record_attempt(
+    *,
+    settings: Settings,
+    model_id: str,
+    run_id: str,
+    case_id: str,
+    prompt: str,
+    temperature: float,
+    num_predict: int,
+) -> CallRecord:
+    payload, latency_ms, transport_error = call_ollama(
+        settings,
+        model_id,
+        prompt,
+        temperature,
+        num_predict,
+    )
+    record = build_record(
+        run_id=run_id,
+        model_id=model_id,
+        case_id=case_id,
+        payload=payload,
+        latency_ms=latency_ms,
+        temperature=temperature,
+        max_output_tokens=num_predict,
+        error_type=error_type_for(payload, transport_error),
+    )
+    append_record(record, run_id)
+    return record
+
+
 def main() -> None:
     settings = Settings.from_env()
     model_id = settings.models["mistral"].model_id
@@ -114,53 +165,27 @@ def main() -> None:
     template = PROMPT_PATH.read_text(encoding="utf-8")
 
     truncated_prompt = template.replace("{document_text}", str(cases["E11"]["source"]))
-    truncated_payload, truncated_latency_ms = call_ollama(
-        settings,
-        model_id,
-        truncated_prompt,
-        TEMPERATURE,
-        TRUNCATION_NUM_PREDICT,
-    )
-    truncated_stop = truncated_payload.get("done_reason")
-    truncated_error = (
-        "TruncatedResponseError" if truncated_stop == "length" else None
-    )
-    append_record(
-        build_record(
-            run_id=run_id,
-            model_id=model_id,
-            case_id="E11",
-            payload=truncated_payload,
-            latency_ms=truncated_latency_ms,
-            temperature=TEMPERATURE,
-            max_output_tokens=TRUNCATION_NUM_PREDICT,
-            error_type=truncated_error,
-        ),
-        run_id,
+    record_attempt(
+        settings=settings,
+        model_id=model_id,
+        run_id=run_id,
+        case_id="E11",
+        prompt=truncated_prompt,
+        temperature=TEMPERATURE,
+        num_predict=TRUNCATION_NUM_PREDICT,
     )
 
     for case_id in SELECTED_CASE_IDS:
         case = cases[case_id]
         prompt = template.replace("{document_text}", str(case["source"]))
-        payload, latency_ms = call_ollama(
-            settings,
-            model_id,
-            prompt,
-            TEMPERATURE,
-            NORMAL_NUM_PREDICT,
-        )
-        append_record(
-            build_record(
-                run_id=run_id,
-                model_id=model_id,
-                case_id=case_id,
-                payload=payload,
-                latency_ms=latency_ms,
-                temperature=TEMPERATURE,
-                max_output_tokens=NORMAL_NUM_PREDICT,
-                error_type=None,
-            ),
-            run_id,
+        record_attempt(
+            settings=settings,
+            model_id=model_id,
+            run_id=run_id,
+            case_id=case_id,
+            prompt=prompt,
+            temperature=TEMPERATURE,
+            num_predict=NORMAL_NUM_PREDICT,
         )
 
     print(f"run_id={run_id}")
