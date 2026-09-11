@@ -17,7 +17,7 @@ from promptlab.errors import TruncatedResponseError
 from promptlab.usage import CallRecord, append_record
 
 LOGICAL_MODEL_KEYS: tuple[str, ...] = ("mistral", "qwen")
-MAX_OUTPUT_TOKENS = 256
+MAX_OUTPUT_TOKENS = 1024
 PROMPT_ID = "baseline"
 PROMPT_VERSION = "v0"
 DOCUMENT_OPEN = "<document>"
@@ -73,6 +73,7 @@ class ModelStats:
     output_tokens_sum: int
     output_tokens_mean: float
     latency_ms_mean: float
+    latency_ms_median: float
     latency_ms_max: int
     cost_usd: float
 
@@ -81,6 +82,16 @@ def _mean(values: Sequence[int]) -> float:
     if not values:
         return 0.0
     return sum(values) / len(values)
+
+
+def _median(values: Sequence[int]) -> float:
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    mid = len(ordered) // 2
+    if len(ordered) % 2:
+        return float(ordered[mid])
+    return (ordered[mid - 1] + ordered[mid]) / 2
 
 
 def stats_for_model(
@@ -110,12 +121,21 @@ def stats_for_model(
         output_tokens_sum=sum(output_tokens),
         output_tokens_mean=_mean(output_tokens),
         latency_ms_mean=_mean(latencies),
+        latency_ms_median=_median(latencies),
         latency_ms_max=max(latencies) if latencies else 0,
         cost_usd=0.0 if not costs else max(costs),
     )
 
 
 def render_comparison(records: Sequence[CallRecord], settings: Settings) -> str:
+    stats_by_name = {
+        logical_name: stats_for_model(
+            logical_name,
+            settings.models[logical_name].model_id,
+            records,
+        )
+        for logical_name in LOGICAL_MODEL_KEYS
+    }
     sections = [
         "# Day 2 model comparison",
         "",
@@ -125,8 +145,7 @@ def render_comparison(records: Sequence[CallRecord], settings: Settings) -> str:
         "",
     ]
     for logical_name in LOGICAL_MODEL_KEYS:
-        model_id = settings.models[logical_name].model_id
-        stats = stats_for_model(logical_name, model_id, records)
+        stats = stats_by_name[logical_name]
         sections.extend(
             [
                 f"## {logical_name} (`{stats.model_id}`)",
@@ -141,10 +160,37 @@ def render_comparison(records: Sequence[CallRecord], settings: Settings) -> str:
                 f"mean={stats.output_tokens_mean:.2f}",
                 f"- Latency (ms): mean={stats.latency_ms_mean:.2f}, "
                 f"max={stats.latency_ms_max}",
+                f"- Latency median (ms): {stats.latency_ms_median:.2f}",
                 "- cost_usd: 0.0",
                 "",
             ]
         )
+    mistral = stats_by_name["mistral"]
+    qwen = stats_by_name["qwen"]
+    sections.extend(
+        [
+            "## Observation",
+            "",
+            (
+                f"{mistral.logical_name} succeeded on {mistral.successes} of "
+                f"{mistral.attempts} attempts (truncations={mistral.truncations}, "
+                f"other errors={mistral.other_errors}) with {mistral.input_tokens_sum} "
+                f"input tokens and {mistral.output_tokens_sum} output tokens; "
+                f"median latency {mistral.latency_ms_median:.2f} ms, "
+                f"max {mistral.latency_ms_max} ms. "
+                f"{qwen.logical_name} succeeded on {qwen.successes} of "
+                f"{qwen.attempts} attempts (truncations={qwen.truncations}, "
+                f"other errors={qwen.other_errors}) with {qwen.input_tokens_sum} "
+                f"input tokens and {qwen.output_tokens_sum} output tokens; "
+                f"median latency {qwen.latency_ms_median:.2f} ms, "
+                f"max {qwen.latency_ms_max} ms. "
+                "These counts and latencies come from the JSONL records; both models "
+                "recorded cost_usd=0.0, so this is a token and latency comparison, "
+                "not a dollar-cost ranking."
+            ),
+            "",
+        ]
+    )
     return "\n".join(sections).rstrip() + "\n"
 
 
