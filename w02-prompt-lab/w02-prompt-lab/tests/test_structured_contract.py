@@ -1,3 +1,5 @@
+# Confidential - Limited License, Author: Kanit Mann
+"""Contract tests for complete_structured's single bounded repair."""
 from __future__ import annotations
 
 from pydantic import BaseModel

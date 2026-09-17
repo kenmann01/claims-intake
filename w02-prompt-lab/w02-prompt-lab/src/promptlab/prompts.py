@@ -1,3 +1,4 @@
+# Confidential - Limited License, Author: Kanit Mann
 """Versioned prompt registry for the Week 2 prompt lab.
 
 Markdown prompt files live in ``src/prompts/``.

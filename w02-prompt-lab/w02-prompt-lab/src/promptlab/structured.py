@@ -1,3 +1,5 @@
+# Confidential - Limited License, Author: Kanit Mann
+"""Schema-validated structured completion with one bounded semantic repair loop."""
 from __future__ import annotations
 
 import json

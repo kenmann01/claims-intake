@@ -1,3 +1,4 @@
+# Confidential - Limited License, Author: Kanit Mann
 """Errors used by the Week 2 local model lab."""
 
 

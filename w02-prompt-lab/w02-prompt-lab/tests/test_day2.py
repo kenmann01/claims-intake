@@ -1,3 +1,5 @@
+# Confidential - Limited License, Author: Kanit Mann
+"""Offline tests for the Day 2 comparison runner's prompt split and markdown."""
 from __future__ import annotations
 
 from datetime import UTC, datetime

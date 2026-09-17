@@ -1,3 +1,4 @@
+# Confidential - Limited License, Author: Kanit Mann
 """Shared adapter request/result types and the ModelAdapter protocol."""
 
 from __future__ import annotations

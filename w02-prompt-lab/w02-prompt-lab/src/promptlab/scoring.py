@@ -1,8 +1,10 @@
-"""Deterministic Day 4 triage scoring. No model calls.
+# Confidential - Limited License, Author: Kanit Mann
+"""Deterministic scoring. No model calls.
 
-Scores the existing TriageOutput fields against gold labels using the
-repository ScoreRecord contract. Escalation is always compared through
-``escalation_required`` and gold ``expected_escalation``.
+Scores triage queue/escalation decisions, evidence recall and citations for
+summarization and extraction, PII leakage, and version-selection verdicts,
+all through the repository ScoreRecord contract. Escalation is always compared
+through ``escalation_required`` and gold ``expected_escalation``.
 """
 
 from __future__ import annotations

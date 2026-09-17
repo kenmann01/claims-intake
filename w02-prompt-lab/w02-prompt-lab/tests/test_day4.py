@@ -1,3 +1,4 @@
+# Confidential - Limited License, Author: Kanit Mann
 """Offline tests for Day 4 prompt loading and notes rendering."""
 
 from __future__ import annotations

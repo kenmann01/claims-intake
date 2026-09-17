@@ -1,3 +1,5 @@
+# Confidential - Limited License, Author: Kanit Mann
+"""Contract tests for the usage record: exact fields, pinned literals, zero cost."""
 from __future__ import annotations
 
 import json

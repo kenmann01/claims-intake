@@ -1,3 +1,4 @@
+# Confidential - Limited License, Author: Kanit Mann
 """Corpus and gold-label loading for the Week 2 prompt lab."""
 
 from __future__ import annotations

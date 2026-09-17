@@ -1,3 +1,5 @@
+# Confidential - Limited License, Author: Kanit Mann
+"""Contract tests for the ModelAdapter interface and the Ollama retry behavior."""
 from __future__ import annotations
 
 from pathlib import Path

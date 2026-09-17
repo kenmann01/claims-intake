@@ -1,3 +1,6 @@
+# Confidential - Limited License, Author: Kanit Mann
+"""Environment-loaded settings: model table with pricing and thinking toggles,
+retry and repair limits, spend caps, and the PII patterns used by scoring."""
 from __future__ import annotations
 
 import os

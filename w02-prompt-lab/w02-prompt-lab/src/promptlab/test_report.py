@@ -1,3 +1,5 @@
+# Confidential - Limited License, Author: Kanit Mann
+"""Check that write_reports renders metric rows and model names from records."""
 from decimal import Decimal
 
 from promptlab.records import OutputRecord, ScoreRecord, UsageRecord

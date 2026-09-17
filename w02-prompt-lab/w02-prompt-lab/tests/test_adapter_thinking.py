@@ -1,3 +1,4 @@
+# Confidential - Limited License, Author: Kanit Mann
 """The thinking-mode toggle stays behind the adapter and follows config."""
 
 from __future__ import annotations

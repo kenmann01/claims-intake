@@ -1,3 +1,6 @@
+# Confidential - Limited License, Author: Kanit Mann
+"""JSONL record contract for run evidence: usage, output, and score rows,
+plus append and load helpers shared by every runner."""
 from __future__ import annotations
 
 import json

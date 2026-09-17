@@ -1,3 +1,6 @@
+# Confidential - Limited License, Author: Kanit Mann
+"""Strict output schemas for the three lab tasks and the schema description
+generator that embeds them in prompts."""
 from __future__ import annotations
 
 import json

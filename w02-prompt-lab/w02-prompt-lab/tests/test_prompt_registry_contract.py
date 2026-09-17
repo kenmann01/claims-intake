@@ -1,3 +1,5 @@
+# Confidential - Limited License, Author: Kanit Mann
+"""Contract tests for prompt loading, substitution, and marker escaping."""
 from pathlib import Path
 
 import pytest

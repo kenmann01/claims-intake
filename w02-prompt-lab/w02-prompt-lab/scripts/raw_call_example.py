@@ -1,3 +1,4 @@
+# Confidential - Limited License, Author: Kanit Mann
 """Minimal Ollama call for Day 1.
 
 This file demonstrates where Ollama returns response text, token counts,

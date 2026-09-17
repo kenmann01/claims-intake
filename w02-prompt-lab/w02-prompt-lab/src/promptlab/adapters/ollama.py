@@ -1,3 +1,4 @@
+# Confidential - Limited License, Author: Kanit Mann
 """Ollama-backed ModelAdapter with transient retry."""
 
 from __future__ import annotations

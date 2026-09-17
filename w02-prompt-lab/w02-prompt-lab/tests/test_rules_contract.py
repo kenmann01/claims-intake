@@ -1,3 +1,5 @@
+# Confidential - Limited License, Author: Kanit Mann
+"""Contract tests for the deterministic version-currency rule."""
 from datetime import date
 
 from promptlab.rules import VersionCandidate, select_current_version

@@ -1,3 +1,4 @@
+# Confidential - Limited License, Author: Kanit Mann
 """Offline tests for deterministic Day 4 triage scoring."""
 
 from __future__ import annotations

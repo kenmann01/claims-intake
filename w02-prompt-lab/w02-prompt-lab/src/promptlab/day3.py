@@ -1,3 +1,4 @@
+# Confidential - Limited License, Author: Kanit Mann
 """Day 3 runner: schema-validated summarization and extraction with bounded repair.
 
 Runs prompts/summarize.v1.md over cases/summarization.jsonl and

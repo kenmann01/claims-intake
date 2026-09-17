@@ -1,3 +1,4 @@
+# Confidential - Limited License, Author: Kanit Mann
 """Day 5 deterministic scorer tests: evidence recall, citations, PII, version rule.
 
 No model calls. Each test feeds hand-built outputs and gold fields so the

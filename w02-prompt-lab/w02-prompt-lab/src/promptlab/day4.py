@@ -1,3 +1,4 @@
+# Confidential - Limited License, Author: Kanit Mann
 """Day 4 runner: two triage prompt versions, one model, deterministic scores.
 
 Runs prompts/triage.v1.md and prompts/triage.v2.md over cases/triage.jsonl

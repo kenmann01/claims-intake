@@ -1,3 +1,5 @@
+# Confidential - Limited License, Author: Kanit Mann
+"""Deterministic policy-version currency rule used by version-selection scoring."""
 from __future__ import annotations
 
 from dataclasses import dataclass

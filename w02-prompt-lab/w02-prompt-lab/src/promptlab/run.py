@@ -1,3 +1,4 @@
+# Confidential - Limited License, Author: Kanit Mann
 """Day 5 runner: one command compares three tasks across both local models.
 
 Runs the selected prompt version per task through the mandated chain

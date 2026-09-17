@@ -1,3 +1,5 @@
+# Confidential - Limited License, Author: Kanit Mann
+"""Structure checks for the shipped extraction prompts against schema and corpus."""
 from __future__ import annotations
 
 import json

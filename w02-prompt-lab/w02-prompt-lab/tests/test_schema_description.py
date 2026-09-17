@@ -1,3 +1,4 @@
+# Confidential - Limited License, Author: Kanit Mann
 """Offline tests for schema_description."""
 
 from __future__ import annotations
