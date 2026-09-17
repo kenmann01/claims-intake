@@ -1,9 +1,8 @@
 # Confidential - Limited License, Author: Kanit Mann
 """JSONL record contract for run evidence: usage, output, and score rows,
-plus append and load helpers shared by every runner."""
+plus the append helper shared by every runner."""
 from __future__ import annotations
 
-import json
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Literal
@@ -73,15 +72,3 @@ def append_record(path: Path, record: Record) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
         handle.write(record.model_dump_json() + "\n")
-
-
-def load_records[T: Record](path: Path, record_type: type[T]) -> list[T]:
-    """Read records of the given type from JSONL; a missing file reads as empty."""
-    if not path.exists():
-        return []
-    records: list[T] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        if line.strip():
-            records.append(record_type.model_validate(json.loads(line)))
-    return records
-
