@@ -1,3 +1,4 @@
+# Confidential - Limited License, Author: Kanit Mann
 """Corpus and gold-label loading for the Week 2 prompt lab."""
 
 from __future__ import annotations
@@ -27,6 +28,7 @@ class Case(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def normalize_common_fields(cls, value: Any) -> Any:
+        """Map starter id and source-field aliases onto the canonical field names."""
         if not isinstance(value, dict):
             return value
 
@@ -70,6 +72,7 @@ class GoldLabel(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def normalize_id(cls, value: Any) -> Any:
+        """Accept case_id as an alias for id before validation."""
         if not isinstance(value, dict):
             return value
 
@@ -80,6 +83,7 @@ class GoldLabel(BaseModel):
 
 
 def _read_jsonl(path: Path) -> list[dict[str, Any]]:
+    """Read a JSONL file into dicts, raising on missing files and malformed rows."""
     if not path.exists():
         raise FileNotFoundError(path)
 
@@ -108,6 +112,7 @@ def _read_jsonl(path: Path) -> list[dict[str, Any]]:
 
 
 def _load_case_rows(task: Task) -> list[dict[str, Any]]:
+    """Read the task's case rows with the task stamped in."""
     path = _CASES_DIR / f"{task}.jsonl"
     rows = _read_jsonl(path)
 

@@ -1,3 +1,5 @@
+# Confidential - Limited License, Author: Kanit Mann
+"""Contract tests for the ModelAdapter interface and the Ollama retry behavior."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -18,10 +20,12 @@ from promptlab.usage import CallRecord
 
 
 def _model_id(name: str) -> str:
+    """Resolve a logical model name to its configured model id."""
     return Settings.from_env().models[name].model_id
 
 
 def _request() -> CompletionRequest:
+    """Build a minimal summarization request for adapter calls."""
     return CompletionRequest(
         task="summarization",
         case_id="case_001",
@@ -41,6 +45,7 @@ class StubAdapter:
     model_id = "fixture-model"
 
     def complete(self, request: CompletionRequest, run_id: str) -> CompletionResult:
+        """Succeed immediately with no recorded attempts."""
         return CompletionResult(
             succeeded=True,
             text="ok",
@@ -50,10 +55,12 @@ class StubAdapter:
 
 
 def accepts_adapter(adapter: ModelAdapter) -> CompletionResult:
+    """Invoke any adapter through the shared contract entry point."""
     return adapter.complete(_request(), "fixture-run")
 
 
 def test_stub_satisfies_model_adapter_contract() -> None:
+    """A minimal stub satisfies the adapter contract."""
     result = accepts_adapter(StubAdapter())
 
     assert result.succeeded is True
@@ -63,6 +70,7 @@ def test_stub_satisfies_model_adapter_contract() -> None:
 
 
 def test_completion_request_contract_is_exact() -> None:
+    """The request field set and task literal stay pinned."""
     assert set(CompletionRequest.model_fields) == {
         "task",
         "case_id",
@@ -83,6 +91,7 @@ def test_completion_request_contract_is_exact() -> None:
 
 
 def test_completion_result_contract_is_exact() -> None:
+    """The result field set stays pinned and references CallRecord."""
     assert set(CompletionResult.model_fields) == {
         "succeeded",
         "text",
@@ -95,6 +104,7 @@ def test_completion_result_contract_is_exact() -> None:
 
 
 def test_same_ollama_adapter_class_can_target_both_models() -> None:
+    """One adapter class serves both configured models."""
     mistral = OllamaAdapter(model_id=_model_id("mistral"))
     qwen = OllamaAdapter(model_id=_model_id("qwen"))
 
@@ -105,6 +115,7 @@ def test_same_ollama_adapter_class_can_target_both_models() -> None:
 
 
 class FakeResponse:
+    """Minimal stand-in for an httpx.Response carrying an Ollama payload."""
     def __init__(
         self,
         *,
@@ -114,6 +125,7 @@ class FakeResponse:
         output_tokens: int = 4,
         done_reason: str = "stop",
     ) -> None:
+        """Store the status code and build the Ollama-shaped payload."""
         self.status_code = status_code
         self.text = text
         self._payload = {
@@ -127,17 +139,20 @@ class FakeResponse:
         }
 
     def json(self) -> dict[str, object]:
+        """Return the canned Ollama payload."""
         return self._payload
 
 
 def test_success_maps_ollama_usage_into_call_record(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
+    """A successful call records tokens, stop reason, and zero cost."""
     monkeypatch.chdir(tmp_path)
 
     calls = 0
 
     def fake_post(*args: object, **kwargs: object) -> FakeResponse:
+        """Count calls and answer with a success payload."""
         nonlocal calls
         calls += 1
         return FakeResponse(
@@ -171,11 +186,13 @@ def test_transient_failure_retries_and_records_each_attempt(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
+    """Transient failures retry to the cap, recording every attempt."""
     monkeypatch.chdir(tmp_path)
 
     calls = 0
 
     def flaky_post(*args: object, **kwargs: object) -> FakeResponse:
+        """Fail twice with a connection error, then succeed."""
         nonlocal calls
         calls += 1
         if calls < 3:
@@ -199,11 +216,13 @@ def test_transient_failure_retries_and_records_each_attempt(
 def test_permanent_failure_is_not_retried(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
+    """HTTP 400 fails once with no retry."""
     monkeypatch.chdir(tmp_path)
 
     calls = 0
 
     def bad_request(*args: object, **kwargs: object) -> FakeResponse:
+        """Count calls and answer with an HTTP 400 payload."""
         nonlocal calls
         calls += 1
         return FakeResponse(status_code=400, text="bad request")
@@ -224,11 +243,13 @@ def test_permanent_failure_is_not_retried(
 def test_truncation_is_recorded_and_not_retried(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
+    """done_reason=length records one truncation attempt."""
     monkeypatch.chdir(tmp_path)
 
     calls = 0
 
     def truncated(*args: object, **kwargs: object) -> FakeResponse:
+        """Answer with a payload whose output hit the token ceiling."""
         nonlocal calls
         calls += 1
         return FakeResponse(

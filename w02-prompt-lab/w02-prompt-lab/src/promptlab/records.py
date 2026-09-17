@@ -1,6 +1,8 @@
+# Confidential - Limited License, Author: Kanit Mann
+"""JSONL record contract for run evidence: usage, output, and score rows,
+plus the append helper shared by every runner."""
 from __future__ import annotations
 
-import json
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Literal
@@ -11,10 +13,12 @@ from promptlab.schemas import TaskName
 
 
 class Record(BaseModel):
+    """Base record: strict, unknown fields rejected."""
     model_config = ConfigDict(extra="forbid")
 
 
 class UsageRecord(Record):
+    """One model-call attempt projected onto the reporting contract."""
     run_id: str
     task: TaskName
     case_id: str
@@ -33,6 +37,7 @@ class UsageRecord(Record):
 
 
 class OutputRecord(Record):
+    """One case's schema-validation outcome and payload."""
     run_id: str
     task: TaskName
     case_id: str
@@ -47,6 +52,7 @@ class OutputRecord(Record):
 
 
 class ScoreRecord(Record):
+    """One scored metric row as a numerator and denominator."""
     run_id: str
     task: TaskName
     case_id: str
@@ -62,17 +68,7 @@ class ScoreRecord(Record):
 
 
 def append_record(path: Path, record: Record) -> None:
+    """Append one record as a JSONL line, creating parent directories."""
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
         handle.write(record.model_dump_json() + "\n")
-
-
-def load_records[T: Record](path: Path, record_type: type[T]) -> list[T]:
-    if not path.exists():
-        return []
-    records: list[T] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        if line.strip():
-            records.append(record_type.model_validate(json.loads(line)))
-    return records
-

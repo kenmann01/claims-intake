@@ -1,3 +1,4 @@
+# Confidential - Limited License, Author: Kanit Mann
 """Minimal Ollama call for Day 1.
 
 This file demonstrates where Ollama returns response text, token counts,
@@ -12,6 +13,7 @@ from promptlab.config import Settings
 
 
 def main() -> None:
+    """Run one Ollama generate call and print text, tokens, and stop reason."""
     settings = Settings.from_env()
     model = settings.models["mistral"]
 

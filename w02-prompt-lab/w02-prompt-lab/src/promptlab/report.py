@@ -1,3 +1,4 @@
+# Confidential - Limited License, Author: Kanit Mann
 """Reporting for the Week 2 model-comparison lab.
 
 The reporting layer consumes the existing UsageRecord, OutputRecord, and
@@ -19,6 +20,7 @@ _ConfigKey = tuple[str, str, str]  # task, model_name, prompt_version
 
 
 def _key(record: Any) -> _ConfigKey:
+    """Return the (task, model_name, prompt_version) grouping key of a record."""
     return (
         str(record.task),
         str(record.model_name),
@@ -27,10 +29,12 @@ def _key(record: Any) -> _ConfigKey:
 
 
 def _for_run(records: Sequence[Any], run_id: str) -> list[Any]:
+    """Filter records down to one run id."""
     return [record for record in records if str(record.run_id) == run_id]
 
 
 def _fmt_number(value: float) -> str:
+    """Render whole floats without a decimal tail."""
     if value.is_integer():
         return str(int(value))
     return f"{value:.1f}"
@@ -66,6 +70,7 @@ def _aggregate_scores(
 
 
 def _metric_text(records: Sequence[ScoreRecord]) -> str:
+    """Render aggregated metrics as numerator/denominator, marking lower-is-better."""
     metrics = _aggregate_scores(records)
     if not metrics:
         return "—"
@@ -126,6 +131,7 @@ def _usage_summary(
 def _output_summary(
     records: Sequence[OutputRecord],
 ) -> tuple[str, str, str]:
+    """Return valid-output, repair, and failure counts for one table row."""
     if not records:
         return "0/0", "0/0", "0"
 
@@ -148,6 +154,7 @@ def _all_config_keys(
     outputs: Sequence[OutputRecord],
     scores: Sequence[ScoreRecord],
 ) -> list[_ConfigKey]:
+    """Collect and sort every config key across the three record kinds."""
     keys = {_key(row) for row in usage}
     keys.update(_key(row) for row in outputs)
     keys.update(_key(row) for row in scores)
@@ -162,6 +169,7 @@ def _write_report(
     scores: Sequence[ScoreRecord],
     report_path: Path,
 ) -> None:
+    """Write the markdown comparison table for one run."""
     lines: list[str] = [
         "# Model Comparison",
         "",

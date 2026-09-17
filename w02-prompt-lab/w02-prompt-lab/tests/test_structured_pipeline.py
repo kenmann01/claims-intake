@@ -1,3 +1,4 @@
+# Confidential - Limited License, Author: Kanit Mann
 """Offline tests for the day-3 runner checks."""
 
 from __future__ import annotations
@@ -5,9 +6,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from promptlab.day3 import CaseOutcome, citation_failures, split_prompt
 from promptlab.records import OutputRecord
 from promptlab.schemas import PolicyExtraction, SummarizationOutput
+from promptlab.structured_pipeline import CaseOutcome, citation_failures, split_prompt
 
 CASE = {
     "id": "S01",
@@ -22,6 +23,7 @@ CASE = {
 
 
 def _outcome(case_id: str, output: dict[str, Any]) -> CaseOutcome:
+    """Wrap an output payload in a succeeded CaseOutcome."""
     record = OutputRecord(
         run_id="test-run",
         task="summarization",
@@ -38,6 +40,7 @@ def _outcome(case_id: str, output: dict[str, Any]) -> CaseOutcome:
 
 
 def test_citation_failures_flag_bare_numbers_and_accept_headings() -> None:
+    """Bare-number citations fail while heading citations pass."""
     heading_citation = {
         "document_status": "valid",
         "title": {"value": "v", "status": "present", "citation": "1. Document Control"},
@@ -64,6 +67,7 @@ def test_citation_failures_flag_bare_numbers_and_accept_headings() -> None:
 
 
 def test_citation_check_generalizes_to_extraction_schema() -> None:
+    """The citation check also validates PolicyExtraction outputs."""
     extraction_case = {
         "id": "E01",
         "task": "extraction",
@@ -88,6 +92,7 @@ def test_citation_check_generalizes_to_extraction_schema() -> None:
 
 
 def test_split_prompt_keeps_sections_after_the_document(tmp_path: Path) -> None:
+    """Sections after the document marker stay in user_content."""
     template = (
         "Task\n\nDo the thing.\n\nInput\n\n<document>\n{document_text}\n</document>\n\n"
         "Examples\n\nTwo examples here.\n\nWhen the task cannot be completed\n\nSay so."

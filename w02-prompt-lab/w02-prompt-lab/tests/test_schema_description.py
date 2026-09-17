@@ -1,3 +1,4 @@
+# Confidential - Limited License, Author: Kanit Mann
 """Offline tests for schema_description."""
 
 from __future__ import annotations
@@ -17,6 +18,7 @@ from promptlab.schemas import (
 
 
 def test_policy_extraction_description_lists_every_field_name() -> None:
+    """Every PolicyExtraction field name appears in the description."""
     description = schema_description(PolicyExtraction)
 
     for name in (
@@ -34,6 +36,7 @@ def test_policy_extraction_description_lists_every_field_name() -> None:
 
 
 def test_policy_extraction_description_includes_literal_vocabularies() -> None:
+    """Status and document vocabularies appear as quoted literals."""
     description = schema_description(PolicyExtraction)
 
     for vocabulary in ("present", "absent", "ambiguous"):
@@ -43,15 +46,19 @@ def test_policy_extraction_description_includes_literal_vocabularies() -> None:
 
 
 def test_policy_extraction_description_includes_citation() -> None:
+    """The EvidenceField citation field is described."""
     assert "citation" in schema_description(PolicyExtraction)
 
 
 def test_description_is_deterministic() -> None:
+    """Repeated generation yields identical text."""
     assert schema_description(PolicyExtraction) == schema_description(PolicyExtraction)
 
 
 def test_plain_model_description_lists_fields_and_basic_types() -> None:
+    """Plain models render field names and primitive types."""
     class Recipe(BaseModel):
+        """Two-field model used to check primitive type naming."""
         name: str
         servings: int
 
@@ -64,6 +71,7 @@ def test_plain_model_description_lists_fields_and_basic_types() -> None:
 
 
 def test_nested_model_fields_are_described() -> None:
+    """Nested EvidenceField members are described."""
     description = schema_description(PolicyExtraction)
 
     for name in ("value", "status", "citation"):
@@ -71,6 +79,7 @@ def test_nested_model_fields_are_described() -> None:
 
 
 def test_description_is_not_itself_a_json_object() -> None:
+    """The description is prose, not parseable JSON."""
     description = schema_description(SummarizationOutput)
 
     with pytest.raises(ValueError):
@@ -80,6 +89,7 @@ def test_description_is_not_itself_a_json_object() -> None:
 
 
 def test_description_forbids_returning_the_description_itself() -> None:
+    """The description forbids echoing itself back."""
     description = schema_description(SummarizationOutput)
 
     assert "Do not return this description" in description
@@ -87,6 +97,7 @@ def test_description_forbids_returning_the_description_itself() -> None:
 
 
 def test_description_does_not_model_a_wrapper_key() -> None:
+    """No wrapper key or schema-name prefix is modeled."""
     description = schema_description(SummarizationOutput)
 
     assert not description.startswith(f"{SummarizationOutput.__name__}:")
@@ -94,6 +105,7 @@ def test_description_does_not_model_a_wrapper_key() -> None:
 
 
 def _top_level_field_names(description: str) -> list[str]:
+    """Collect the two-space-indented field names from a description."""
     names: list[str] = []
     for line in description.splitlines():
         if not line.startswith("  "):
@@ -103,6 +115,7 @@ def _top_level_field_names(description: str) -> list[str]:
 
 
 def test_analysis_field_is_listed_first_for_v2() -> None:
+    """analysis is listed first only in the v2 schema."""
     v2_names = _top_level_field_names(schema_description(TriageOutputWithAnalysis))
     v1_names = _top_level_field_names(schema_description(TriageOutput))
 

@@ -1,3 +1,4 @@
+# Confidential - Limited License, Author: Kanit Mann
 """Ollama-backed ModelAdapter with transient retry."""
 
 from __future__ import annotations
@@ -24,15 +25,18 @@ _PERMANENT_STATUS_CODES = {400, 404, 422}
 
 
 class OllamaAdapter:
+    """ModelAdapter that calls a local Ollama /api/generate endpoint."""
     provider = "ollama"
 
     def __init__(self, model_id: str) -> None:
+        """Bind the adapter to a configured model id, rejecting unknown ids."""
         known_ids = {config.model_id for config in Settings.from_env().models.values()}
         if model_id not in known_ids:
             raise UnknownModelError(model_id)
         self.model_id = model_id
 
     def complete(self, request: CompletionRequest, run_id: str) -> CompletionResult:
+        """Post to /api/generate with bounded transient retry, recording every attempt."""
         settings = Settings.from_env()
         max_attempts = min(1 + settings.max_retries, 3)
         url = f"{settings.ollama_base_url}/api/generate"

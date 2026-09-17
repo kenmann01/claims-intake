@@ -1,3 +1,6 @@
+# Confidential - Limited License, Author: Kanit Mann
+"""Environment-loaded settings: model table with pricing and thinking toggles,
+retry and repair limits, spend caps, and the PII patterns used by scoring."""
 from __future__ import annotations
 
 import os
@@ -20,6 +23,7 @@ PII_PATTERNS: tuple[re.Pattern[str], ...] = (
 
 @dataclass(frozen=True)
 class ModelConfig:
+    """One configured model: logical name, provider id, USD pricing, thinking toggle."""
     logical_name: str
     model_id: str
     input_usd_per_million: Decimal = Decimal("0")
@@ -29,6 +33,7 @@ class ModelConfig:
     think: bool | None = None
 
     def cost(self, prompt_tokens: int, completion_tokens: int) -> Decimal:
+        """Return the USD charge for the supplied token counts."""
         million = Decimal(1_000_000)
         return (
             Decimal(prompt_tokens) * self.input_usd_per_million / million
@@ -51,6 +56,7 @@ def _env_think(name: str, default: bool | None = None) -> bool | None:
 
 @dataclass(frozen=True)
 class Settings:
+    """Lab-wide settings resolved from environment variables with defaults."""
     ollama_base_url: str
     models: dict[str, ModelConfig]
     temperature: float
@@ -61,6 +67,7 @@ class Settings:
 
     @classmethod
     def from_env(cls) -> Settings:
+        """Load the project .env and build settings for the two configured models."""
         load_dotenv(PROJECT_ROOT / ".env")
         model_a = os.getenv("MODEL_A", "mistral:7b")
         model_b = os.getenv("MODEL_B", "qwen3:8b")

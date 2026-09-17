@@ -1,3 +1,5 @@
+# Confidential - Limited License, Author: Kanit Mann
+"""Contract tests for the usage record: exact fields, pinned literals, zero cost."""
 from __future__ import annotations
 
 import json
@@ -36,6 +38,7 @@ EXPECTED_FIELDS = {
 
 
 def make_record() -> CallRecord:
+    """Build a valid CallRecord fixture."""
     model_id = Settings.from_env().models["mistral"].model_id
     return CallRecord(
         record_id="00000000-0000-4000-8000-000000000001",
@@ -62,10 +65,12 @@ def make_record() -> CallRecord:
 
 
 def test_call_record_has_exact_fields() -> None:
+    """The CallRecord field set stays pinned."""
     assert set(CallRecord.model_fields) == EXPECTED_FIELDS
 
 
 def test_local_provider_and_task_literals_are_pinned() -> None:
+    """The provider and task literals stay pinned."""
     provider_annotation = CallRecord.model_fields["provider"].annotation
     task_annotation = CallRecord.model_fields["task"].annotation
 
@@ -74,17 +79,20 @@ def test_local_provider_and_task_literals_are_pinned() -> None:
 
 
 def test_timestamp_must_be_timezone_aware() -> None:
+    """Timestamps carry timezone information."""
     record = make_record()
     assert record.timestamp.tzinfo is not None
     assert record.timestamp.utcoffset() is not None
 
 
 def test_known_local_model_has_zero_provider_charge() -> None:
+    """Configured local models cost zero."""
     model_id = Settings.from_env().models["mistral"].model_id
     assert compute_cost(model_id, input_tokens=1234, output_tokens=567) == pytest.approx(0.0)
 
 
 def test_unknown_model_raises() -> None:
+    """An unknown model id raises UnknownModelError."""
     with pytest.raises(UnknownModelError):
         compute_cost("not-a-configured-model", input_tokens=10, output_tokens=10)
 
@@ -92,6 +100,7 @@ def test_unknown_model_raises() -> None:
 def test_append_record_appends_jsonl(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """append_record appends JSONL lines without rewriting."""
     monkeypatch.chdir(tmp_path)
     record = make_record()
 

@@ -1,3 +1,5 @@
+# Confidential - Limited License, Author: Kanit Mann
+"""Structure checks for the shipped extraction prompts against schema and corpus."""
 from __future__ import annotations
 
 import json
@@ -37,6 +39,7 @@ EXAMPLE_FILE_NAMES: Final[tuple[str, ...]] = (
 
 
 def _read_text(path: Path) -> str:
+    """Read a file as UTF-8 text."""
     return path.read_text(encoding="utf-8")
 
 
@@ -115,11 +118,13 @@ def _example_outputs(text: str) -> list[dict[str, object]]:
 
 
 def test_extract_v1_has_required_sections_in_order() -> None:
+    """v1 lists the required sections in the mandated order."""
     indexes = _required_section_indexes(_read_text(V1_PATH))
     assert all(earlier < later for earlier, later in zip(indexes, indexes[1:], strict=False))
 
 
 def test_extract_v2_sections_order_including_examples() -> None:
+    """v2 keeps Examples between Output and the cannot-complete section."""
     text = _read_text(V2_PATH)
     indexes = _required_section_indexes(text)
     assert all(earlier < later for earlier, later in zip(indexes, indexes[1:], strict=False))
@@ -131,6 +136,7 @@ def test_extract_v2_sections_order_including_examples() -> None:
 
 
 def test_both_prompts_delimit_source_and_declare_data_not_instruction() -> None:
+    """Both prompts fence the document once and declare it data."""
     for path in (V1_PATH, V2_PATH):
         text = _read_text(path)
         assert "<document>" in text, f"{path.name} does not open a document marker"
@@ -141,12 +147,14 @@ def test_both_prompts_delimit_source_and_declare_data_not_instruction() -> None:
 
 
 def test_extract_v1_has_no_examples_section() -> None:
+    """v1 carries no examples section or example outputs."""
     text = _read_text(V1_PATH)
     assert _section_index(text, EXAMPLES_SECTION) is None
     assert EXAMPLE_OUTPUT_MARKER not in text
 
 
 def test_extract_v2_embeds_example_documents_verbatim() -> None:
+    """v2 embeds both example documents verbatim."""
     v2_text = _normalize(_read_text(V2_PATH))
     for name in EXAMPLE_FILE_NAMES:
         example_text = _normalize(_read_text(LAB_ROOT / "examples" / name))
@@ -154,6 +162,7 @@ def test_extract_v2_embeds_example_documents_verbatim() -> None:
 
 
 def test_prompts_contain_no_case_content() -> None:
+    """No 8-gram of any case source appears in either prompt."""
     case_grams: set[tuple[str, ...]] = set()
     for source in _case_sources():
         case_grams |= _word_grams(source, NGRAM_SIZE)
@@ -164,6 +173,7 @@ def test_prompts_contain_no_case_content() -> None:
 
 
 def test_example_outputs_validate_against_policy_extraction() -> None:
+    """Both example outputs validate against PolicyExtraction."""
     outputs = _example_outputs(_read_text(V2_PATH))
     assert len(outputs) == 2, "extract.v2.md must contain exactly two example outputs"
 

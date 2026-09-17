@@ -114,7 +114,7 @@ You will implement or create:
 
 ```text
 src/promptlab/usage.py
-src/promptlab/day1.py
+src/promptlab/usage_baseline.py
 docs/day1-run.jsonl
 docs/day1-observations.md
 ```
@@ -127,8 +127,8 @@ Run these from the repository root inside the devcontainer:
 
 ```bash
 uv run pytest tests/test_usage_contract.py
-uv run ruff check src/promptlab/usage.py src/promptlab/day1.py
-uv run mypy src/promptlab/usage.py src/promptlab/day1.py
+uv run ruff check src/promptlab/usage.py src/promptlab/usage_baseline.py
+uv run mypy src/promptlab/usage.py src/promptlab/usage_baseline.py
 ```
 
 The contract test does not make a network call.

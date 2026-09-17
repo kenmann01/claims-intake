@@ -1,3 +1,5 @@
+# Confidential - Limited License, Author: Kanit Mann
+"""Contract tests for complete_structured's single bounded repair."""
 from __future__ import annotations
 
 from pydantic import BaseModel
@@ -7,18 +9,22 @@ from promptlab.structured import complete_structured
 
 
 class TinySchema(BaseModel):
+    """One-field schema used to force a validation failure."""
     value: str
 
 
 class RepairingStubAdapter:
+    """Adapter that answers wrong-shaped JSON once, then a fixed object."""
     provider = "ollama"
     model_id = "fixture-model"
 
     def __init__(self) -> None:
+        """Track the call count and every seen request."""
         self.calls = 0
         self.requests: list[CompletionRequest] = []
 
     def complete(self, request: CompletionRequest, run_id: str) -> CompletionResult:
+        """Answer wrong-shaped JSON first, then the corrected object."""
         assert run_id == "fixture-run"
         self.calls += 1
         self.requests.append(request)
@@ -33,6 +39,7 @@ class RepairingStubAdapter:
 
 
 def _request() -> CompletionRequest:
+    """Build a minimal summarization request."""
     return CompletionRequest(
         task="summarization",
         case_id="S00",
@@ -46,6 +53,7 @@ def _request() -> CompletionRequest:
 
 
 def test_complete_structured_repairs_once() -> None:
+    """One repair turns a wrong shape into a valid object."""
     adapter = RepairingStubAdapter()
 
     result = complete_structured(
@@ -61,6 +69,7 @@ def test_complete_structured_repairs_once() -> None:
 
 
 def test_repair_request_carries_validation_context() -> None:
+    """The repair request repeats the validation error and field name."""
     adapter = RepairingStubAdapter()
 
     complete_structured(

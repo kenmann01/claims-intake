@@ -1,4 +1,6 @@
-"""Day 3 runner: schema-validated summarization and extraction with bounded repair.
+# Confidential - Limited License, Author: Kanit Mann
+"""Day 3 structured-pipeline runner: schema-validated summarization and extraction
+with bounded repair.
 
 Runs prompts/summarize.v1.md over cases/summarization.jsonl and
 prompts/extract.v2.md over cases/extraction.jsonl under one run_id, then
@@ -64,11 +66,13 @@ _HEADING_RE = re.compile(r"^\s*\d+\.\s+(.+?)\s*$")
 
 @dataclass(frozen=True)
 class CaseOutcome:
+    """One case's output record paired with its first-pass validation error."""
     record: OutputRecord
     first_error: str | None
 
 
 def load_cases(path: Path) -> list[dict[str, Any]]:
+    """Load case rows from JSONL, enforcing the fixed 12-case count."""
     cases: list[dict[str, Any]] = []
     for line in path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
@@ -108,6 +112,7 @@ def run_task(
     settings: Settings,
     outputs_path: Path,
 ) -> list[CaseOutcome]:
+    """Run one task's cases through complete_structured, recording calls and outputs."""
     schema_text = schema_description(schema)
     outcomes: list[CaseOutcome] = []
     for case in cases:
@@ -172,10 +177,12 @@ def run_task(
 
 
 def _tokens(text: str) -> list[str]:
+    """Lowercase the text into an alphanumeric token stream."""
     return re.findall(r"[a-z0-9]+", text.lower())
 
 
 def _ngrams(tokens: Sequence[str], size: int) -> set[tuple[str, ...]]:
+    """Return the set of consecutive token n-grams of the given size."""
     return {tuple(tokens[i : i + size]) for i in range(len(tokens) - size + 1)}
 
 
@@ -195,6 +202,7 @@ def distinctive_example_ngrams(corpus_texts: Sequence[str]) -> set[tuple[str, ..
 
 
 def contains_any_gram(text: str, grams: set[tuple[str, ...]]) -> bool:
+    """Report whether the text contains any of the supplied n-grams."""
     tokens = _tokens(text)
     size = len(next(iter(grams)))
     return any(
@@ -203,6 +211,7 @@ def contains_any_gram(text: str, grams: set[tuple[str, ...]]) -> bool:
 
 
 def leakage_case_ids(outcomes: Sequence[CaseOutcome], grams: set[tuple[str, ...]]) -> list[str]:
+    """List succeeded case ids whose output contains distinctive example n-grams."""
     if not grams:
         return []
     hits: list[str] = []
@@ -215,6 +224,7 @@ def leakage_case_ids(outcomes: Sequence[CaseOutcome], grams: set[tuple[str, ...]
 
 
 def _section_headings(source: str) -> set[str]:
+    """Collect normalized numbered-heading forms from a source document."""
     headings: set[str] = set()
     for line in source.splitlines():
         match = _HEADING_RE.match(line)
@@ -225,6 +235,7 @@ def _section_headings(source: str) -> set[str]:
 
 
 def citation_exists(citation: str, headings: set[str]) -> bool:
+    """Check a citation against normalized headings, ignoring a leading Section."""
     normalized = " ".join(citation.split()).casefold()
     normalized = re.sub(r"^section\s+", "", normalized)
     return normalized in headings
@@ -235,6 +246,7 @@ def citation_failures(
     cases: Sequence[dict[str, Any]],
     schema: type[SummarizationOutput] | type[PolicyExtraction],
 ) -> list[str]:
+    """List present evidence fields whose citation matches no real section heading."""
     source_by_id = {str(case["id"]): str(case["source"]) for case in cases}
     failures: list[str] = []
     for outcome in outcomes:
@@ -251,14 +263,8 @@ def citation_failures(
     return failures
 
 
-def _error_signature(first_error: str) -> str:
-    match = re.search(r"\[type=([a-z_]+)", first_error)
-    if match is not None:
-        return match.group(1)
-    return " ".join(first_error.split())[:200]
-
-
 def _repair_rate(outcomes: Sequence[CaseOutcome]) -> tuple[int, int, str]:
+    """Return repaired count, total, and percentage string for one task's outcomes."""
     repaired = sum(1 for outcome in outcomes if outcome.record.repairs >= 1)
     total = len(outcomes)
     percent = f"{(repaired / total * 100):.1f}" if total else "0.0"
@@ -273,6 +279,7 @@ def render_notes(
     leakage: Sequence[str],
     citation_failure_lines: Sequence[str],
 ) -> str:
+    """Render the Day 3 notes markdown from outcomes, leakage, and citation checks."""
     sum_repaired, sum_total, sum_pct = _repair_rate(summarization)
     ext_repaired, ext_total, ext_pct = _repair_rate(extraction)
 
@@ -342,6 +349,7 @@ def render_notes(
 
 
 def main() -> None:
+    """Run summarization and extraction once, then write evidence and notes."""
     settings = Settings.from_env()
     run_id = str(uuid4())
     model_id = settings.models[LOGICAL_MODEL_KEY].model_id

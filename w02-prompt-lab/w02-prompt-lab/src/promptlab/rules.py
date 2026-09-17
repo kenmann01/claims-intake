@@ -1,3 +1,5 @@
+# Confidential - Limited License, Author: Kanit Mann
+"""Deterministic policy-version currency rule used by version-selection scoring."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -6,6 +8,7 @@ from datetime import date
 
 @dataclass(frozen=True)
 class VersionCandidate:
+    """One extracted policy version with its effective date."""
     case_id: str
     version: str
     effective_date: date
