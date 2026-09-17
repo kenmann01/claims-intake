@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from promptlab.config import PROJECT_ROOT, Settings
-from promptlab.day2 import split_baseline_prompt, write_comparison
+from promptlab.model_comparison import split_baseline_prompt, write_comparison
 from promptlab.usage import CallRecord
 
 PROMPT_PATH = PROJECT_ROOT / "src" / "prompts" / "baseline.v0.md"
@@ -17,7 +17,7 @@ def _record(**overrides: object) -> CallRecord:
     settings = Settings.from_env()
     values: dict[str, object] = {
         "record_id": "00000000-0000-4000-8000-000000000001",
-        "run_id": "day2-fixture",
+        "run_id": "comparison-fixture",
         "timestamp": datetime(2026, 9, 11, 16, 0, tzinfo=UTC),
         "provider": "ollama",
         "model_id": settings.models["mistral"].model_id,

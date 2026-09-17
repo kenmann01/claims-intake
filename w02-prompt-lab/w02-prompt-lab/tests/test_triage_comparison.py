@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from promptlab.day4 import changed_queue_count, render_notes
 from promptlab.prompts import load, render_user
 from promptlab.records import OutputRecord, ScoreRecord
 from promptlab.scoring import METRIC_QUEUE, SCORER_VERSION
+from promptlab.triage_comparison import changed_queue_count, render_notes
 from promptlab.usage import CallRecord
 
 

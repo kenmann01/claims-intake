@@ -1,5 +1,5 @@
 # Confidential - Limited License, Author: Kanit Mann
-"""Day 1 runner: instrument Mistral extraction calls through Ollama."""
+"""Day 1 usage-baseline runner: instrument Mistral extraction calls through Ollama."""
 
 from __future__ import annotations
 

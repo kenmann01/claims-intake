@@ -6,9 +6,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from promptlab.day3 import CaseOutcome, citation_failures, split_prompt
 from promptlab.records import OutputRecord
 from promptlab.schemas import PolicyExtraction, SummarizationOutput
+from promptlab.structured_pipeline import CaseOutcome, citation_failures, split_prompt
 
 CASE = {
     "id": "S01",

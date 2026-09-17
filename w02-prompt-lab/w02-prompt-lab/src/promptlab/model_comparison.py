@@ -1,5 +1,5 @@
 # Confidential - Limited License, Author: Kanit Mann
-"""Day 2 runner: compare configured models on all summarization cases."""
+"""Day 2 model-comparison runner: compare configured models on all summarization cases."""
 
 from __future__ import annotations
 

@@ -1,5 +1,6 @@
 # Confidential - Limited License, Author: Kanit Mann
-"""Day 4 runner: two triage prompt versions, one model, deterministic scores.
+"""Day 4 triage-comparison runner: two triage prompt versions, one model,
+deterministic scores.
 
 Runs prompts/triage.v1.md and prompts/triage.v2.md over cases/triage.jsonl
 under one run_id through complete_structured, then writes run, score, and
