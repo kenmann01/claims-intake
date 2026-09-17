@@ -263,14 +263,6 @@ def citation_failures(
     return failures
 
 
-def _error_signature(first_error: str) -> str:
-    """Extract the pydantic error type, or shorten the raw error string."""
-    match = re.search(r"\[type=([a-z_]+)", first_error)
-    if match is not None:
-        return match.group(1)
-    return " ".join(first_error.split())[:200]
-
-
 def _repair_rate(outcomes: Sequence[CaseOutcome]) -> tuple[int, int, str]:
     """Return repaired count, total, and percentage string for one task's outcomes."""
     repaired = sum(1 for outcome in outcomes if outcome.record.repairs >= 1)
