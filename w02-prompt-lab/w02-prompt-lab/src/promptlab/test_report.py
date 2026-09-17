@@ -7,6 +7,7 @@ from promptlab.report import write_reports
 
 
 def test_report_is_generated_from_records(tmp_path: object) -> None:
+    """Render metric counts and model names into both output files."""
     from pathlib import Path
 
     root = Path(str(tmp_path))

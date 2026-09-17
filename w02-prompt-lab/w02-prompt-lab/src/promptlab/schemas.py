@@ -16,16 +16,19 @@ DocumentStatus = Literal["valid", "contradictory", "superseded", "unsupported"]
 
 
 class StrictModel(BaseModel):
+    """Base model that rejects unknown fields."""
     model_config = ConfigDict(extra="forbid")
 
 
 class EvidenceField(StrictModel):
+    """One extracted value with a presence status and an optional citation."""
     value: str | list[str] | None
     status: FieldStatus
     citation: str | None = None
 
 
 class TriageOutput(StrictModel):
+    """Strict triage routing output."""
     queue: Literal[
         "card_dispute",
         "fraud_report",
@@ -44,10 +47,12 @@ class TriageOutput(StrictModel):
 
 
 class TriageOutputWithAnalysis(TriageOutput):
+    """Triage output that adds an analysis field before the routing fields."""
     analysis: str
 
 
 class SummarizationOutput(StrictModel):
+    """Summarization output: document status plus six evidence fields."""
     document_status: DocumentStatus
     title: EvidenceField
     version: EvidenceField
@@ -57,6 +62,7 @@ class SummarizationOutput(StrictModel):
     exceptions: EvidenceField
 
     def evidence_fields(self) -> dict[str, EvidenceField]:
+        """Return the evidence fields keyed by field name."""
         return {
             "title": self.title,
             "version": self.version,
@@ -68,6 +74,7 @@ class SummarizationOutput(StrictModel):
 
 
 class PolicyExtraction(StrictModel):
+    """KYC policy extraction output: document status plus six evidence fields."""
     document_status: DocumentStatus
     policy_name: EvidenceField
     version: EvidenceField
@@ -78,6 +85,7 @@ class PolicyExtraction(StrictModel):
     required_documents: EvidenceField
 
     def evidence_fields(self) -> dict[str, EvidenceField]:
+        """Return the evidence fields keyed by field name."""
         return {
             "policy_name": self.policy_name,
             "version": self.version,
@@ -141,6 +149,7 @@ def _fields_for_description(model: type[BaseModel]) -> list[tuple[str, FieldInfo
 
 
 def _field_line(name: str, field_info: FieldInfo, nested: list[type[BaseModel]]) -> str:
+    """Format one field line, queueing nested models for their own sections."""
     annotation = _describe_annotation(field_info.annotation, nested)
     required = "" if field_info.is_required() else " (optional)"
     return f"  {name}: {annotation}{required}"
@@ -158,6 +167,7 @@ def _describe_annotation(
     annotation: object,
     nested: list[type[BaseModel]],
 ) -> str:
+    """Render an annotation as prompt text, following nested models."""
     if annotation is None or annotation is type(None):
         return "null"
     primitive = _PRIMITIVE_NAMES.get(annotation)

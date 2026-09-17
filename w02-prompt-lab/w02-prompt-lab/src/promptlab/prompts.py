@@ -29,6 +29,7 @@ class MissingPromptVariableError(ValueError):
     """A required prompt variable was not supplied."""
 
     def __init__(self, missing: list[str]) -> None:
+        """Store the missing names and report them in the message."""
         self.missing = missing
         super().__init__(f"missing prompt variables: {', '.join(missing)}")
 
@@ -66,6 +67,7 @@ def _split_layers(text: str) -> tuple[str, str]:
 
 
 def _prompt_path(prompt_id: str, version: str) -> Path:
+    """Resolve a prompt id and version to a file path, rejecting unsafe components."""
     if not _SAFE_COMPONENT.fullmatch(prompt_id):
         raise ValueError(f"invalid prompt_id: {prompt_id!r}")
     if not _SAFE_COMPONENT.fullmatch(version):

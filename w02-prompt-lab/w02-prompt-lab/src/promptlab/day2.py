@@ -31,6 +31,7 @@ COMPARISON_PATH = PROJECT_ROOT / "docs" / "day2-comparison.md"
 
 
 def load_summarization_cases(path: Path) -> list[dict[str, Any]]:
+    """Load summarization cases, enforcing the fixed 12-case count."""
     cases: list[dict[str, Any]] = []
     for line in path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
@@ -45,6 +46,7 @@ def load_summarization_cases(path: Path) -> list[dict[str, Any]]:
 
 
 def split_baseline_prompt(template: str, source: str) -> tuple[str, str]:
+    """Split the baseline template at the document marker into system and user layers."""
     marker_at = template.find(DOCUMENT_OPEN)
     if marker_at < 0:
         raise ValueError("baseline prompt is missing document tags")
@@ -54,6 +56,7 @@ def split_baseline_prompt(template: str, source: str) -> tuple[str, str]:
 
 
 def load_evidence(path: Path) -> list[CallRecord]:
+    """Read CallRecords back from a JSONL evidence file."""
     records: list[CallRecord] = []
     for line in path.read_text(encoding="utf-8").splitlines():
         if line.strip():
@@ -63,6 +66,7 @@ def load_evidence(path: Path) -> list[CallRecord]:
 
 @dataclass(frozen=True)
 class ModelStats:
+    """Aggregated per-model counts and token, latency, and cost figures."""
     logical_name: str
     model_id: str
     attempts: int
@@ -80,12 +84,14 @@ class ModelStats:
 
 
 def _mean(values: Sequence[int]) -> float:
+    """Return the arithmetic mean, or 0.0 for an empty sequence."""
     if not values:
         return 0.0
     return sum(values) / len(values)
 
 
 def _median(values: Sequence[int]) -> float:
+    """Return the median without assuming sorted input; 0.0 when empty."""
     if not values:
         return 0.0
     ordered = sorted(values)
@@ -100,6 +106,7 @@ def stats_for_model(
     model_id: str,
     records: Sequence[CallRecord],
 ) -> ModelStats:
+    """Aggregate one model's records into attempts, errors, tokens, latency, and cost."""
     rows = [record for record in records if record.model_id == model_id]
     successes = sum(1 for record in rows if record.error_type is None)
     truncations = sum(
@@ -129,6 +136,7 @@ def stats_for_model(
 
 
 def render_comparison(records: Sequence[CallRecord], settings: Settings) -> str:
+    """Render the Day 2 comparison markdown from both models' records."""
     stats_by_name = {
         logical_name: stats_for_model(
             logical_name,
@@ -196,11 +204,13 @@ def render_comparison(records: Sequence[CallRecord], settings: Settings) -> str:
 
 
 def write_comparison(evidence_path: Path, markdown_path: Path, settings: Settings) -> None:
+    """Regenerate the comparison markdown from an evidence JSONL file."""
     records = load_evidence(evidence_path)
     markdown_path.write_text(render_comparison(records, settings), encoding="utf-8")
 
 
 def main() -> None:
+    """Run both models over every summarization case and write evidence and comparison."""
     settings = Settings.from_env()
     run_id = str(uuid4())
     cases = load_summarization_cases(CASES_PATH)

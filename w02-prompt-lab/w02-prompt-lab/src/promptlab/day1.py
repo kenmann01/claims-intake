@@ -26,6 +26,7 @@ PROMPT_PATH = PROJECT_ROOT / "src" / "prompts" / "baseline.v0.md"
 
 
 def load_selected_cases(path: Path, case_ids: tuple[str, ...]) -> dict[str, dict[str, Any]]:
+    """Return the wanted extraction cases keyed by id, raising when any are missing."""
     wanted = set(case_ids)
     selected: dict[str, dict[str, Any]] = {}
     for line in path.read_text(encoding="utf-8").splitlines():
@@ -48,6 +49,7 @@ def call_ollama(
     temperature: float,
     num_predict: int,
 ) -> tuple[dict[str, Any], int, str | None]:
+    """Post one generate request; return the payload, latency in ms, and transport error name."""
     started = time.perf_counter()
     try:
         response = httpx.post(
@@ -81,6 +83,7 @@ def call_ollama(
 
 
 def error_type_for(payload: dict[str, Any], transport_error: str | None) -> str | None:
+    """Map a transport error or done_reason=length to the recorded error type."""
     if transport_error is not None:
         return transport_error
     if payload.get("done_reason") == "length":
@@ -99,6 +102,7 @@ def build_record(
     max_output_tokens: int,
     error_type: str | None,
 ) -> CallRecord:
+    """Assemble one CallRecord from an Ollama payload and the call metadata."""
     input_tokens = int(payload.get("prompt_eval_count") or 0)
     output_tokens = int(payload.get("eval_count") or 0)
     stop_reason = payload.get("done_reason")
@@ -137,6 +141,7 @@ def record_attempt(
     temperature: float,
     num_predict: int,
 ) -> CallRecord:
+    """Call Ollama once, append the usage record under the run id, and return it."""
     payload, latency_ms, transport_error = call_ollama(
         settings,
         model_id,
@@ -159,6 +164,7 @@ def record_attempt(
 
 
 def main() -> None:
+    """Run the Day 1 baseline: one forced-truncation probe, then three extraction calls."""
     settings = Settings.from_env()
     model_id = settings.models["mistral"].model_id
     run_id = str(uuid4())

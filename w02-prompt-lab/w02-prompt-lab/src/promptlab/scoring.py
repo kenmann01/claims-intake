@@ -45,6 +45,7 @@ _BOUNDARY_LANGUAGE = re.compile(
 
 
 def _unit(passed: bool) -> tuple[int, int]:
+    """Convert a boolean pass to a (numerator, denominator) pair."""
     return (1 if passed else 0, 1)
 
 
@@ -59,6 +60,7 @@ def _predicted_escalation(output: Mapping[str, Any] | None) -> bool | None:
 
 
 def _boundary_corpus(output: Mapping[str, Any] | None) -> str:
+    """Join draft_reply and customer_outcome into the text the boundary check scans."""
     if output is None:
         return ""
     parts: list[str] = []
@@ -72,6 +74,7 @@ def _boundary_corpus(output: Mapping[str, Any] | None) -> str:
 
 
 def _boundary_hits(text: str) -> list[str]:
+    """Return every forbidden human-boundary term found in the text."""
     return [match.group(0) for match in _BOUNDARY_LANGUAGE.finditer(text)]
 
 
@@ -105,6 +108,7 @@ def score_case(
         lower_is_better: bool = False,
         detail: str | None = None,
     ) -> ScoreRecord:
+        """Build one ScoreRecord row for a single metric."""
         return ScoreRecord(
             run_id=run_id,
             task="triage",
@@ -214,6 +218,7 @@ def _section_headings(source: str) -> set[str]:
 
 
 def _citation_exists(citation: str, headings: set[str]) -> bool:
+    """Check a citation against normalized headings, ignoring a leading Section."""
     normalized = " ".join(citation.split()).casefold()
     normalized = re.sub(r"^section\s+", "", normalized)
     return normalized in headings
@@ -229,6 +234,7 @@ def _evidence_fields(output: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
 
 
 def _value_present(value: Any) -> bool:
+    """Treat blank strings and empty sequences as missing, anything else as present."""
     if value is None:
         return False
     if isinstance(value, str):
@@ -265,6 +271,7 @@ def score_evidence_case(
         *,
         detail: str | None = None,
     ) -> ScoreRecord:
+        """Build one ScoreRecord row for a single metric."""
         return ScoreRecord(
             run_id=run_id,
             task=task,

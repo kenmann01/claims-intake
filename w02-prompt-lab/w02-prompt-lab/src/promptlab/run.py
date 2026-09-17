@@ -116,6 +116,7 @@ TASK_SPECS: dict[TaskName, TaskSpec] = {
 def _load_task_pairs(
     task: TaskName, limit: int | None
 ) -> list[tuple[Case, GoldLabel]]:
+    """Load and count-check one task's case/gold pairs, optionally trimmed to a limit."""
     pairs = load_cases(task)
     if len(pairs) != EXPECTED_CASE_COUNT:
         raise ValueError(
@@ -133,6 +134,7 @@ def _request_for(
     case: Case,
     temperature: float,
 ) -> CompletionRequest:
+    """Build the CompletionRequest for one case from its task spec and template."""
     schema_text = schema_description(spec.schema)
     # Day 3 prompts carry the schema description in the user layer and have an
     # empty system layer; day 4 triage prompts carry it in the system layer.
@@ -222,6 +224,7 @@ def run_task_model(
 
 
 def _evidence_fields_of(output: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
+    """Return the output's EvidenceField-shaped members."""
     return {
         str(name): value
         for name, value in output.items()
@@ -244,6 +247,7 @@ def _free_texts_of(output: Mapping[str, Any]) -> list[str]:
 
 
 def _triage_texts_of(output: Mapping[str, Any]) -> list[str]:
+    """Collect the triage free-text fields the PII scan must inspect."""
     texts = [
         str(output.get("draft_reply", "")),
         str(output.get("rationale", "")),
@@ -445,6 +449,7 @@ def _usage_records(
 
 
 def _load_call_records(run_id: str) -> list[CallRecord]:
+    """Read the run's CallRecords back from runs/<run_id>.jsonl."""
     path = RUNS_DIR / f"{run_id}.jsonl"
     if not path.exists():
         return []
@@ -478,6 +483,7 @@ def _append_thinking_note(report_path: Path, settings: Settings) -> None:
 
 
 def _parse_args() -> argparse.Namespace:
+    """Parse CLI flags for tasks, models, case limit, run id, and validate-only."""
     parser = argparse.ArgumentParser(
         description="Run the Week 2 three-task local model comparison."
     )
@@ -551,6 +557,7 @@ def validate_only(task_names: Sequence[TaskName]) -> None:
 
 
 def main() -> None:
+    """Run the selected tasks and models, score, and write run evidence and reports."""
     args = _parse_args()
     settings = Settings.from_env()
     task_names: list[TaskName] = list(args.task) if args.task else list(TASK_SPECS)

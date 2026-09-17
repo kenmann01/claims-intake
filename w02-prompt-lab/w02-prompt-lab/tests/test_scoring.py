@@ -20,6 +20,7 @@ GOLD_T06_ESCALATION = True
 
 
 def _output(**overrides: object) -> dict[str, object]:
+    """Build a triage output payload with overridable fields."""
     payload: dict[str, object] = {
         "queue": "card_dispute",
         "escalation_required": False,
@@ -34,6 +35,7 @@ def _output(**overrides: object) -> dict[str, object]:
 
 
 def _by_metric(records: list[ScoreRecord]) -> dict[str, ScoreRecord]:
+    """Index score records by metric name."""
     return {record.metric: record for record in records}
 
 
@@ -43,6 +45,7 @@ def _score(
     expected_queue: str,
     expected_escalation: bool,
 ) -> list[ScoreRecord]:
+    """Score one case against gold queue and escalation."""
     return score_case(
         run_id="r",
         case_id=case_id,
@@ -55,6 +58,7 @@ def _score(
 
 
 def test_queue_mismatch_is_scored_against_expected_queue() -> None:
+    """A wrong queue scores zero against the expected queue."""
     records = _score("T01", _output(queue="lending"), GOLD_T01_QUEUE, GOLD_T01_ESCALATION)
     by_metric = _by_metric(records)
     assert by_metric[METRIC_QUEUE].numerator == 0
@@ -62,11 +66,13 @@ def test_queue_mismatch_is_scored_against_expected_queue() -> None:
 
 
 def test_queue_match_scores_one() -> None:
+    """The correct queue scores one."""
     records = _score("T01", _output(), GOLD_T01_QUEUE, GOLD_T01_ESCALATION)
     assert _by_metric(records)[METRIC_QUEUE].numerator == 1
 
 
 def test_missed_escalation_uses_escalation_required_not_human_review() -> None:
+    """Reads escalation_required, not human_review_required."""
     records = _score(
         "T06",
         _output(
@@ -87,6 +93,7 @@ def test_missed_escalation_uses_escalation_required_not_human_review() -> None:
 
 
 def test_unnecessary_escalation_when_gold_does_not_require_it() -> None:
+    """Escalating when gold does not require it scores unnecessary."""
     records = _score(
         "T01",
         _output(escalation_required=True),
@@ -100,6 +107,7 @@ def test_unnecessary_escalation_when_gold_does_not_require_it() -> None:
 
 
 def test_human_boundary_flags_forbidden_draft_reply() -> None:
+    """Approval language in draft_reply fails the boundary metric."""
     records = _score(
         "T01",
         _output(
@@ -114,6 +122,7 @@ def test_human_boundary_flags_forbidden_draft_reply() -> None:
 
 
 def test_human_boundary_inspects_customer_outcome() -> None:
+    """Boundary language in customer_outcome fails the metric too."""
     records = _score(
         "T01",
         _output(customer_outcome="resolved"),
@@ -124,6 +133,7 @@ def test_human_boundary_inspects_customer_outcome() -> None:
 
 
 def test_failed_output_scores_queue_and_escalation_zero() -> None:
+    """A missing output scores zero queue and escalation, one missed."""
     records = _score("T06", None, GOLD_T06_QUEUE, GOLD_T06_ESCALATION)
     by_metric = _by_metric(records)
     assert by_metric[METRIC_QUEUE].numerator == 0

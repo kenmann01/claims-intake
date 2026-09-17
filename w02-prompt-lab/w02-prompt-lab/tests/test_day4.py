@@ -13,6 +13,7 @@ from promptlab.usage import CallRecord
 
 
 def _output_record(case_id: str, version: str, queue: str) -> OutputRecord:
+    """Build a succeeded triage OutputRecord with the given queue."""
     return OutputRecord(
         run_id="run",
         task="triage",
@@ -36,6 +37,7 @@ def _output_record(case_id: str, version: str, queue: str) -> OutputRecord:
 
 
 def test_triage_prompts_are_layered_and_v1_omits_analysis() -> None:
+    """Both triage prompts are layered; only v2 mentions analysis."""
     v1 = load("triage", "v1")
     v2 = load("triage", "v2")
 
@@ -51,6 +53,7 @@ def test_triage_prompts_are_layered_and_v1_omits_analysis() -> None:
 
 
 def test_render_user_fills_customer_fence() -> None:
+    """render_user places untrusted text inside the customer fence."""
     template = load("triage", "v1")
     rendered = render_user(template, {}, untrusted="I was charged twice.")
     assert "I was charged twice." in rendered
@@ -58,6 +61,7 @@ def test_render_user_fills_customer_fence() -> None:
 
 
 def test_changed_queue_count_detects_one_difference() -> None:
+    """Only the case whose queue changed is counted."""
     outputs = [
         _output_record("T01", "v1", "card_dispute"),
         _output_record("T02", "v1", "fraud_report"),
@@ -68,6 +72,7 @@ def test_changed_queue_count_detects_one_difference() -> None:
 
 
 def test_render_notes_uses_counts_and_zero_cost() -> None:
+    """Notes render counts and zero cost without percentages."""
     scores = [
         ScoreRecord(
             run_id="run",

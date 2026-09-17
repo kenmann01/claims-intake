@@ -14,10 +14,12 @@ from promptlab.schemas import TaskName
 
 
 class Record(BaseModel):
+    """Base record: strict, unknown fields rejected."""
     model_config = ConfigDict(extra="forbid")
 
 
 class UsageRecord(Record):
+    """One model-call attempt projected onto the reporting contract."""
     run_id: str
     task: TaskName
     case_id: str
@@ -36,6 +38,7 @@ class UsageRecord(Record):
 
 
 class OutputRecord(Record):
+    """One case's schema-validation outcome and payload."""
     run_id: str
     task: TaskName
     case_id: str
@@ -50,6 +53,7 @@ class OutputRecord(Record):
 
 
 class ScoreRecord(Record):
+    """One scored metric row as a numerator and denominator."""
     run_id: str
     task: TaskName
     case_id: str
@@ -65,12 +69,14 @@ class ScoreRecord(Record):
 
 
 def append_record(path: Path, record: Record) -> None:
+    """Append one record as a JSONL line, creating parent directories."""
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
         handle.write(record.model_dump_json() + "\n")
 
 
 def load_records[T: Record](path: Path, record_type: type[T]) -> list[T]:
+    """Read records of the given type from JSONL; a missing file reads as empty."""
     if not path.exists():
         return []
     records: list[T] = []

@@ -8,6 +8,7 @@ from datetime import date
 
 @dataclass(frozen=True)
 class VersionCandidate:
+    """One extracted policy version with its effective date."""
     case_id: str
     version: str
     effective_date: date

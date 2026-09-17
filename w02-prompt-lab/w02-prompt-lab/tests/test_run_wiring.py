@@ -21,6 +21,7 @@ from promptlab.usage import CallRecord
 
 
 def call_record(**overrides: Any) -> CallRecord:
+    """Build a CallRecord fixture with overridable fields."""
     values: dict[str, Any] = dict(
         record_id="c1",
         run_id="r",
@@ -48,6 +49,7 @@ def call_record(**overrides: Any) -> CallRecord:
 
 
 def output_record(**overrides: Any) -> OutputRecord:
+    """Build an OutputRecord fixture with overridable fields."""
     values: dict[str, Any] = dict(
         run_id="r",
         task="triage",
@@ -66,6 +68,7 @@ def output_record(**overrides: Any) -> OutputRecord:
 
 
 def test_usage_records_distinguish_repair_from_retry() -> None:
+    """Repair ids classify as repair; later attempts as transport_retry."""
     calls = [
         call_record(),
         call_record(record_id="c2", attempt=2),
@@ -79,6 +82,7 @@ def test_usage_records_distinguish_repair_from_retry() -> None:
 
 
 def test_triage_scoring_emits_queue_and_pii() -> None:
+    """Triage scoring emits queue, escalation, and PII rows."""
     spec = TASK_SPECS["triage"]
     record = output_record(
         output={
@@ -114,9 +118,11 @@ def test_triage_scoring_emits_queue_and_pii() -> None:
 
 
 def test_version_selection_uses_the_deterministic_rule() -> None:
+    """The version rule selects the gold current case."""
     spec = TASK_SPECS["extraction"]
 
     def gold(id: str) -> GoldLabel:
+        """Build one grouped gold label fixture."""
         return GoldLabel.model_validate(
             {
                 "id": id,
@@ -160,6 +166,7 @@ def test_version_selection_uses_the_deterministic_rule() -> None:
 
 
 def test_reports_render_from_projected_records(tmp_path: Path) -> None:
+    """write_reports renders projected usage and score rows."""
     usage = _usage_records([call_record()], set(), {"mistral:7b": "mistral"})
     outputs = [
         output_record(

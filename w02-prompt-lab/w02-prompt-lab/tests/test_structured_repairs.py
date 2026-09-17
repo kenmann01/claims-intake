@@ -14,19 +14,23 @@ from promptlab.usage import CallRecord
 
 
 class Answer(BaseModel):
+    """One-field schema for repair-path tests."""
     value: str
 
 
 class ScriptedAdapter:
+    """Adapter that replays a fixed list of results."""
     provider = "ollama"
     model_id = "fixture-model"
 
     def __init__(self, responses: list[CompletionResult]) -> None:
+        """Store the scripted results and the request log."""
         self.responses = list(responses)
         self.requests: list[CompletionRequest] = []
         self.run_ids: list[str] = []
 
     def complete(self, request: CompletionRequest, run_id: str) -> CompletionResult:
+        """Replay the next scripted result, repeating the last one."""
         self.requests.append(request)
         self.run_ids.append(run_id)
         index = min(len(self.requests) - 1, len(self.responses) - 1)
@@ -38,6 +42,7 @@ def _record(
     response_text: str | None,
     error_type: str | None,
 ) -> CallRecord:
+    """Build a CallRecord fixture for one attempt."""
     return CallRecord(
         record_id=f"record-{attempt}",
         run_id="fixture-run",
@@ -68,6 +73,7 @@ def _result(
     attempt: int = 1,
     error_type: str | None = None,
 ) -> CompletionResult:
+    """Wrap text in a CompletionResult with one record."""
     return CompletionResult(
         succeeded=text is not None,
         text=text,
@@ -77,6 +83,7 @@ def _result(
 
 
 def _request() -> CompletionRequest:
+    """Build a minimal summarization request."""
     return CompletionRequest(
         task="summarization",
         case_id="S00",
@@ -90,6 +97,7 @@ def _request() -> CompletionRequest:
 
 
 def test_first_pass_valid_json_returns_object_with_zero_repairs() -> None:
+    """Valid first-pass JSON returns with an untouched trace."""
     adapter = ScriptedAdapter([_result('{"value": "ok"}')])
     trace = StructuredCallTrace()
 
@@ -105,6 +113,7 @@ def test_first_pass_valid_json_returns_object_with_zero_repairs() -> None:
 
 
 def test_unparseable_text_is_repaired_once() -> None:
+    """Non-JSON text triggers exactly one repair call."""
     original_content = _request().user_content
     adapter = ScriptedAdapter(
         [_result("no json here at all"), _result('{"value": "fixed"}', attempt=2)]
@@ -132,6 +141,7 @@ def test_unparseable_text_is_repaired_once() -> None:
 
 
 def test_wrong_shape_json_triggers_one_repair_naming_the_field() -> None:
+    """A shape error names the missing field in the repair."""
     adapter = ScriptedAdapter(
         [_result('{"wrong": "shape"}'), _result('{"value": "fixed"}', attempt=2)]
     )
@@ -153,6 +163,7 @@ def test_wrong_shape_json_triggers_one_repair_naming_the_field() -> None:
 
 
 def test_persistent_invalidity_raises_after_exactly_two_calls() -> None:
+    """Two invalid answers raise with one repair counted."""
     adapter = ScriptedAdapter(
         [_result('{"wrong": "shape"}'), _result('{"still": "wrong"}', attempt=2)]
     )
@@ -168,6 +179,7 @@ def test_persistent_invalidity_raises_after_exactly_two_calls() -> None:
 
 
 def test_max_repairs_zero_raises_after_one_call() -> None:
+    """Zero allowed repairs means one call, then raise."""
     adapter = ScriptedAdapter([_result("not json at all")])
     trace = StructuredCallTrace()
 
@@ -181,6 +193,7 @@ def test_max_repairs_zero_raises_after_one_call() -> None:
 
 
 def test_transport_failure_raises_without_repair_call() -> None:
+    """A transport failure raises before any repair request."""
     adapter = ScriptedAdapter([_result(None, error_type="connection_error")])
     trace = StructuredCallTrace()
 
@@ -193,6 +206,7 @@ def test_transport_failure_raises_without_repair_call() -> None:
 
 
 def test_fenced_response_parses_with_zero_repairs() -> None:
+    """Fenced JSON parses without a repair."""
     adapter = ScriptedAdapter([_result('```json\n{"value": "fenced"}\n```')])
 
     result = complete_structured(adapter, _request(), Answer, "fixture-run")
@@ -202,6 +216,7 @@ def test_fenced_response_parses_with_zero_repairs() -> None:
 
 
 def test_trace_records_accumulate_across_calls_in_order() -> None:
+    """Trace records keep call order across primary and repair."""
     adapter = ScriptedAdapter(
         [_result('{"wrong": "shape"}'), _result('{"value": "fixed"}', attempt=2)]
     )

@@ -62,6 +62,7 @@ NOTES_PATH = PROJECT_ROOT / "docs" / "day4-notes.md"
 
 @dataclass(frozen=True)
 class PromptVersion:
+    """One triage prompt version paired with its output schema."""
     version: str
     schema: type[BaseModel]
 
@@ -73,6 +74,7 @@ PROMPT_VERSIONS: tuple[PromptVersion, ...] = (
 
 
 def load_jsonl(path: Path) -> list[dict[str, Any]]:
+    """Read nonblank JSONL rows into dicts."""
     rows: list[dict[str, Any]] = []
     for line in path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
@@ -83,6 +85,7 @@ def load_jsonl(path: Path) -> list[dict[str, Any]]:
 
 
 def load_cases(path: Path) -> list[dict[str, Any]]:
+    """Load triage cases, enforcing the fixed 12-case count."""
     cases = load_jsonl(path)
     if len(cases) != EXPECTED_CASE_COUNT:
         raise ValueError(
@@ -92,6 +95,7 @@ def load_cases(path: Path) -> list[dict[str, Any]]:
 
 
 def load_gold(path: Path) -> dict[str, dict[str, Any]]:
+    """Load gold rows keyed by case id, enforcing the fixed count."""
     gold: dict[str, dict[str, Any]] = {}
     for row in load_jsonl(path):
         gold[str(row["id"])] = row
@@ -103,6 +107,7 @@ def load_gold(path: Path) -> dict[str, dict[str, Any]]:
 
 
 def load_call_records(run_id: str) -> list[CallRecord]:
+    """Read the run's CallRecords back from runs/<run_id>.jsonl."""
     path = RUNS_DIR / f"{run_id}.jsonl"
     if not path.exists():
         return []
@@ -122,6 +127,7 @@ def run_version(
     max_repairs: int,
     outputs_path: Path,
 ) -> list[OutputRecord]:
+    """Run one prompt version over all cases, recording calls and outputs."""
     template = load(PROMPT_ID, spec.version)
     schema_text = schema_description(spec.schema)
     system = substitute(template.system, {"schema_description": schema_text})
@@ -190,6 +196,7 @@ def score_records(
     outputs: Sequence[OutputRecord],
     gold_by_id: Mapping[str, Mapping[str, Any]],
 ) -> list[ScoreRecord]:
+    """Score every output record against its gold row."""
     scores: list[ScoreRecord] = []
     for record in outputs:
         gold = gold_by_id[record.case_id]
@@ -210,6 +217,7 @@ def score_records(
 def _metric_total(
     scores: Sequence[ScoreRecord], prompt_version: str, metric: str
 ) -> tuple[int, int]:
+    """Sum numerator and denominator for one prompt version and metric."""
     rows = [
         score
         for score in scores
@@ -219,10 +227,12 @@ def _metric_total(
 
 
 def _outputs_for(outputs: Sequence[OutputRecord], version: str) -> list[OutputRecord]:
+    """Return the output records belonging to one prompt version."""
     return [record for record in outputs if record.prompt_version == version]
 
 
 def _queue_of(record: OutputRecord) -> str | None:
+    """Return the record's queue value, or None when the output is absent."""
     if record.output is None:
         return None
     queue = record.output.get("queue")
@@ -230,12 +240,14 @@ def _queue_of(record: OutputRecord) -> str | None:
 
 
 def changed_queue_count(outputs: Sequence[OutputRecord]) -> int:
+    """Count cases whose queue differs between prompt versions v1 and v2."""
     v1 = {record.case_id: _queue_of(record) for record in _outputs_for(outputs, "v1")}
     v2 = {record.case_id: _queue_of(record) for record in _outputs_for(outputs, "v2")}
     return sum(1 for case_id, queue in v1.items() if v2.get(case_id) != queue)
 
 
 def _tokens_per_case(calls: Sequence[CallRecord], version: str) -> float:
+    """Return mean output tokens per case for one prompt version."""
     totals: dict[str, int] = defaultdict(int)
     for call in calls:
         if call.prompt_version == version:
@@ -246,6 +258,7 @@ def _tokens_per_case(calls: Sequence[CallRecord], version: str) -> float:
 
 
 def _case_latencies_ms(calls: Sequence[CallRecord], version: str) -> list[int]:
+    """Return summed per-case latencies in ms for one prompt version."""
     totals: dict[str, int] = defaultdict(int)
     for call in calls:
         if call.prompt_version == version:
@@ -254,6 +267,7 @@ def _case_latencies_ms(calls: Sequence[CallRecord], version: str) -> list[int]:
 
 
 def _median(values: Sequence[int]) -> float:
+    """Return the median without assuming sorted input; 0.0 when empty."""
     if not values:
         return 0.0
     ordered = sorted(values)
@@ -264,6 +278,7 @@ def _median(values: Sequence[int]) -> float:
 
 
 def _ms_to_seconds(value_ms: float) -> float:
+    """Convert milliseconds to seconds."""
     return value_ms / 1000.0
 
 
@@ -275,7 +290,9 @@ def render_notes(
     scores: Sequence[ScoreRecord],
     calls: Sequence[CallRecord],
 ) -> str:
+    """Render the Day 4 notes markdown from outputs, scores, and call records."""
     def line_for(version: str) -> str:
+        """Format one version's metric totals line."""
         queue_n, queue_d = _metric_total(scores, version, METRIC_QUEUE)
         esc_n, esc_d = _metric_total(scores, version, METRIC_ESCALATION)
         missed, _ = _metric_total(scores, version, METRIC_MISSED_ESCALATION)
@@ -361,6 +378,7 @@ def render_notes(
 
 
 def main() -> None:
+    """Run both prompt versions, score them, and write evidence, scores, and notes."""
     settings = Settings.from_env()
     run_id = str(uuid4())
     model_name = settings.models[LOGICAL_MODEL_KEY].logical_name

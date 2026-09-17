@@ -13,6 +13,7 @@ from promptlab.config import Settings
 
 
 def main() -> None:
+    """Run one Ollama generate call and print text, tokens, and stop reason."""
     settings = Settings.from_env()
     model = settings.models["mistral"]
 

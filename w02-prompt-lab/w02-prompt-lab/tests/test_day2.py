@@ -13,6 +13,7 @@ PROMPT_PATH = PROJECT_ROOT / "src" / "prompts" / "baseline.v0.md"
 
 
 def _record(**overrides: object) -> CallRecord:
+    """Build a CallRecord fixture with overridable fields."""
     settings = Settings.from_env()
     values: dict[str, object] = {
         "record_id": "00000000-0000-4000-8000-000000000001",
@@ -41,6 +42,7 @@ def _record(**overrides: object) -> CallRecord:
 
 
 def test_baseline_prompt_splits_instruction_from_document_tags() -> None:
+    """Split into a clean system layer and a fenced document."""
     template = PROMPT_PATH.read_text(encoding="utf-8")
     source = "Card Dispute Intake Procedure."
 
@@ -57,6 +59,7 @@ def test_baseline_prompt_splits_instruction_from_document_tags() -> None:
 
 
 def test_comparison_markdown_is_generated_from_evidence_records(tmp_path: Path) -> None:
+    """Render per-model stats and zero-cost language from JSONL."""
     settings = Settings.from_env()
     mistral_id = settings.models["mistral"].model_id
     qwen_id = settings.models["qwen"].model_id

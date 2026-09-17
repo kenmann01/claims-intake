@@ -9,6 +9,7 @@ from promptlab.prompts import MissingPromptVariableError, PromptTemplate
 
 
 def _template(user_template: str) -> PromptTemplate:
+    """Build a PromptTemplate fixture with the given user layer."""
     return PromptTemplate(
         prompt_id="test",
         version="v1",
@@ -21,6 +22,7 @@ def _template(user_template: str) -> PromptTemplate:
 def test_load_reads_prompt_files_from_src_prompts(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """load reads and splits a prompt file from PROMPT_DIR."""
     prompt_dir = tmp_path / "prompts"
     prompt_dir.mkdir()
     (prompt_dir / "triage.v1.md").write_text(
@@ -40,6 +42,7 @@ def test_load_reads_prompt_files_from_src_prompts(
 
 
 def test_render_user_rejects_missing_variable() -> None:
+    """A missing supplied variable raises MissingPromptVariableError."""
     template = _template(
         "Case: {case_id}\n<customer_message>\n"
         "{document_text}\n</customer_message>"
@@ -50,6 +53,7 @@ def test_render_user_rejects_missing_variable() -> None:
 
 
 def test_render_user_escapes_customer_closing_marker() -> None:
+    """Untrusted text cannot close the customer fence early."""
     template = _template(
         "Case: {case_id}\n<customer_message>\n"
         "{document_text}\n</customer_message>"
@@ -66,6 +70,7 @@ def test_render_user_escapes_customer_closing_marker() -> None:
 
 
 def test_render_user_does_not_break_on_literal_json_braces() -> None:
+    """Literal JSON braces in the template stay literal."""
     template = _template(
         'Return JSON like {"queue": "card_dispute"}.\n'
         "Case: {case_id}\n<customer_message>\n"

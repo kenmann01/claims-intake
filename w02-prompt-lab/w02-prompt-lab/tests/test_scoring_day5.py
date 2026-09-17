@@ -31,12 +31,14 @@ Reviewed every year.
 def field(
     value: str | list[str] | None, status: str, citation: str | None = None
 ) -> dict[str, Any]:
+    """Build one EvidenceField-shaped dict."""
     return {"value": value, "status": status, "citation": citation}
 
 
 def evidence_records(
     output: dict[str, Any], recoverable: list[str]
 ) -> list[ScoreRecord]:
+    """Score one extraction output through score_evidence_case."""
     return score_evidence_case(
         run_id="r",
         task="extraction",
@@ -51,6 +53,7 @@ def evidence_records(
 
 
 def test_recall_counts_present_recoverable_fields() -> None:
+    """Recall counts present fields with nonblank values."""
     output = {
         "policy_name": field("Small Business KYC", "present", "1. Document Control"),
         "version": field("1.0", "absent"),
@@ -64,6 +67,7 @@ def test_recall_counts_present_recoverable_fields() -> None:
 
 
 def test_recall_treats_blank_present_value_as_missing() -> None:
+    """A blank present value counts as missing."""
     output = {"policy_name": field("   ", "present", None)}
     records = evidence_records(output, ["policy_name"])
     recall = next(r for r in records if r.metric == METRIC_REQUIRED_EVIDENCE_RECALL)
@@ -71,6 +75,7 @@ def test_recall_treats_blank_present_value_as_missing() -> None:
 
 
 def test_citation_correctness_requires_a_real_heading() -> None:
+    """Only real section headings count as citations."""
     output = {
         "policy_name": field("Small Business KYC", "present", "1. Document Control"),
         "review_frequency": field("every year", "present", "3"),
@@ -82,11 +87,13 @@ def test_citation_correctness_requires_a_real_heading() -> None:
 
 
 def test_citation_skipped_when_nothing_is_present() -> None:
+    """No present fields means no citation metric is emitted."""
     records = evidence_records({}, ["policy_name"])
     assert all(r.metric != METRIC_CITATION_CORRECTNESS for r in records)
 
 
 def test_absent_heading_form_accepts_bare_heading_text() -> None:
+    """A Section prefix before the heading text is accepted."""
     output = {
         "policy_name": field("Small Business KYC", "present", "Section 1. Document Control"),
     }
@@ -96,6 +103,7 @@ def test_absent_heading_form_accepts_bare_heading_text() -> None:
 
 
 def test_pii_leakage_flags_ssn_and_email() -> None:
+    """SSN and email patterns flag leakage with the match in detail."""
     record = score_pii_case(
         run_id="r",
         task="triage",
@@ -112,6 +120,7 @@ def test_pii_leakage_flags_ssn_and_email() -> None:
 
 
 def test_pii_leakage_passes_clean_text() -> None:
+    """Clean text scores zero with no detail."""
     record = score_pii_case(
         run_id="r",
         task="triage",
@@ -125,6 +134,7 @@ def test_pii_leakage_passes_clean_text() -> None:
 
 
 def test_version_selection_scores_only_exact_matches() -> None:
+    """Only the exact expected case id scores one."""
     hit = score_version_selection(
         run_id="r",
         task="extraction",

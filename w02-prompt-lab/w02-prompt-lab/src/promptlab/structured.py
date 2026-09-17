@@ -27,6 +27,7 @@ class StructuredCompletionError(RuntimeError):
     """Raised when no schema-valid object could be produced."""
 
     def __init__(self, message: str, trace: StructuredCallTrace) -> None:
+        """Attach the trace of the failed completion to the error."""
         super().__init__(message)
         self.trace = trace
 
@@ -129,6 +130,7 @@ def _json_candidates(text: str) -> Iterator[str]:
 
 
 def _strip_code_fences(text: str) -> str:
+    """Drop leading and trailing markdown code fence lines."""
     lines = text.splitlines()
     if lines and lines[0].startswith("```"):
         lines = lines[1:]
@@ -138,6 +140,7 @@ def _strip_code_fences(text: str) -> str:
 
 
 def _brace_substring(text: str) -> str | None:
+    """Return the outermost brace-to-brace substring, or None."""
     start = text.find("{")
     end = text.rfind("}")
     if start == -1 or end <= start:
